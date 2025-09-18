@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KN0X-FIT Interactive Diet Plan</title>
+    <!-- Chosen Palette: Cool Gray & Slate Blue -->
+    <!-- Application Structure Plan: A dashboard-style SPA with a main overview and tabbed navigation for each of the 4 weeks, a new "Key Notes" section, and a final "Explore" page. This structure was chosen to organize the dense information logically, prevent overwhelming the user with a long scroll, and allow for quick access to specific weekly plans, a summary of key principles, and additional services. The user flow is: Overview -> Select Week -> View Daily Meals -> Read Key Notes -> Explore other services. -->
+    <!-- Visualization & Content Choices: 1. Client Metrics (BMI/BMR/TDEE): Goal=Inform, Method=Styled HTML cards with a CSS bar for BMI, Interaction=None, Justification=Clear, static display of core data. 2. Macro Split: Goal=Inform, Method=Donut Chart, Interaction=Hover for tooltips, Justification=Visually represents dietary proportions effectively, Library=Chart.js. 3. Weekly Plans: Goal=Organize/Inform, Method=Tabs with meal cards, Interaction=Click tabs to switch weeks. 4. Key Notes: Goal=Educate/Inform, Method=Grid of stylized cards with icons and text, Interaction=None, Justification=Breaks down complex information into digestible, easy-to-scan sections. 5. Explore Page: Goal=Engage/Inform/Convert, Method=Styled cards with plan details and interactive contact links, Interaction=Clickable links to social media and contact info. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        .nav-link.active {
+            background-color: #4f46e5;
+            color: white;
+            font-weight: 600;
+        }
+        .content-fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+        .collapsible-content.expanded {
+            max-height: 500px; /* Adjust as needed */
+        }
+        .collapsible-header i {
+            transition: transform 0.3s ease-in-out;
+        }
+        .collapsible-header.expanded i {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="min-h-screen flex flex-col lg:flex-row">
+        <!-- Sidebar Navigation -->
+        <aside class="bg-white lg:w-64 p-4 lg:p-6 shadow-md lg:min-h-screen">
+            <div class="flex items-center justify-center mb-8 w-full">
+                <!-- Logo -->
+                <img src="./src/assets/logo.png" alt="KN0X-FIT Logo" class="h-14 w-auto drop-shadow-md">
+            </div>
+            <nav id="navigation" class="space-y-2">
+                <a href="#" data-view="dashboard" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-indigo-50">
+                    <i class="fa-solid fa-gauge-high w-5"></i> Dashboard
+                </a>
+                <a href="#" data-view="week1" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-indigo-50">
+                    <i class="fa-solid fa-calendar-day w-5"></i> Week 1
+                </a>
+                <a href="#" data-view="week2" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-indigo-50">
+                    <i class="fa-solid fa-calendar-week w-5"></i> Week 2
+                </a>
+                <a href="#" data-view="week3" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-indigo-50">
+                    <i class="fa-solid fa-calendar-alt w-5"></i> Week 3
+                </a>
+                <a href="#" data-view="week4" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-indigo-50">
+                    <i class="fa-solid fa-calendar w-5"></i> Week 4
+                </a>
+                <a href="#" data-view="keyNotes" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-indigo-50">
+                    <i class="fa-solid fa-clipboard-list w-5"></i> Key Notes
+                </a>
+                <a href="#" data-view="explore" class="nav-link flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-600 hover:bg-indigo-50">
+                    <i class="fa-solid fa-rocket w-5"></i> Explore
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="flex-1 p-4 sm:p-6 lg:p-8">
+            <!-- Content will be injected here -->
+        </main>
+    </div>
+
+    <script>
+        const dietPlanData = {
+            client: {
+                name: "Harsh Pandit",
+                goal: "Muscle Gain",
+                age: 21,
+                gender: "Male",
+                currentWeight: "58 kg",
+                bmr: 1570,
+                bmi: 19.16,
+                tdee: 2433.5,
+                calorieTarget: 2800,
+                dietaryPreference: "Eggetarian",
+                activityLevel: "Intermediate"
+            },
+            generalGuidelines: [
+                "Hydration: Drink 3-4 liters of water daily.",
+                "Portion Control: Use a kitchen scale for accurate measurements.",
+                "Macros: The plan focuses on a macronutrient breakdown of approximately 50% protein, 30% carbohydrates, and 20% healthy fats.",
+                "Micros: Emphasis is on nutrient-dense foods to ensure adequate intake of vitamins and minerals."
+            ],
+            weeks: {
+                week1: {
+                    title: "Week 1: Foundations (Target: ~2800 calories)",
+                    focus: "This plan is for a full day. Repeat this plan each day of the week to ensure consistent progress.",
+                    meals: [
+                        { time: "Breakfast (650–700 kcal)", item: "3 idlis (fermented rice + urad dal batter) with sambar (lentils + tamarind + vegetables) and 1 boiled egg + coconut chutney (2 tbsp) and 1 glass skimmed milk (200 ml).", macros: "80g carbs, 30g protein, 15g fat", micros: "Vitamin C (sambar veg), Calcium (milk), Iron (urad dal), B12 (egg), Potassium (coconut, dal)", color: "bg-orange-100", alternative: "2 masala dosas with egg bhurji filling." },
+                        { time: "Lunch (950–1,000 kcal)", item: "1.5 cups brown rice/white rice (150 g cooked), sambar with drumstick + spinach, 1 boiled egg or omelette (2 eggs, less oil), 1 cup vegetable poriyal (beans, carrot, coconut), and 1 cup curd.", macros: "130g carbs, 35g protein, 20g fat", micros: "Folate (spinach), Calcium + Probiotics (curd), Fiber (vegetables), Magnesium (dal + rice)", color: "bg-green-100", alternative: "Lemon rice + egg curry + cucumber raita." },
+                        { time: "Dinner (850–900 kcal)", item: "2 chapatis (whole wheat), vegetable kurma (beans, carrot, peas, coconut-based), 2 boiled eggs (or egg curry), and 1 small bowl curd.", macros: "95g carbs, 28g protein, 18g fat", micros: "Zinc (whole wheat), Vitamin A (carrot), B12 (eggs), Probiotics (curd)", color: "bg-blue-100", alternative: "Ragi mudde + soppu saaru (greens + dal) + egg curry." },
+                        { time: "Total Daily Intake", item: "~2650 calories | Protein: ~125g, Carbs: ~352g, Fat: ~83g", macros: "", micros: "Note: To reach the 2800 kcal goal, add one large banana post-workout and a slightly larger portion of rice at lunch.", color: "bg-indigo-100" }
+                    ]
+                },
+                week2: {
+                    title: "Week 2: Continued Progress (Target: ~2800 calories)",
+                    focus: "This plan is for a full day. Repeat this plan each day of the week to ensure consistent progress.",
+                    meals: [
+                        { time: "Breakfast (650–700 kcal)", item: "1.5 cups upma (rava ~70 g + onions + carrot + beans + green chilli) cooked in 1 tsp ghee, 2 boiled eggs, and 1 glass skimmed milk (200 ml).", macros: "85g carbs, 32g protein, 16g fat", micros: "Vitamin B-complex (rava), Calcium (milk), Iron (eggs + beans), Folate (carrot)", color: "bg-orange-100", alternative: "2 onion dosas (fermented rice + urad dal batter) + egg podimas (scrambled eggs with onion + curry leaves)." },
+                        { time: "Lunch (950–1,000 kcal)", item: "1.5 cups tamarind rice (150 g cooked rice + tamarind paste + curry leaves + 1 tsp gingelly oil), 2 eggs (scrambled with onion + tomato), 1 cup spinach poriyal (spinach + coconut), and 1 cup curd.", macros: "125g carbs, 37g protein, 22g fat", micros: "Iron + Folate (spinach), Calcium (curd), Vitamin C (tomato), Potassium (curry leaves)", color: "bg-green-100", alternative: "Vegetable puliyodarai + boiled egg curry + beetroot poriyal." },
+                        { time: "Dinner (850–900 kcal)", item: "3 medium dosas (made from 100 g batter), 2-egg omelette (cooked with onions, green chilli, little oil), 1 small cup sautéed greens (amaranth/keerai, ½ cup), and 1 tbsp coconut chutney.", macros: "95g carbs, 30g protein, 18g fat", micros: "Vitamin K (greens), Zinc (urad dal), B12 (eggs), Manganese (coconut)", color: "bg-blue-100", alternative: "2 chapatis + dal tadka + egg curry + cucumber salad." },
+                        { time: "Total Daily Intake", item: "~2650 calories | Protein: ~125g, Carbs: ~352g, Fat: ~83g", macros: "", micros: "Note: To reach the 2800 kcal goal, add one large banana post-workout and a slightly larger portion of rice at lunch.", color: "bg-indigo-100" }
+                    ]
+                },
+                week3: {
+                    title: "Week 3: Continued Progress (Target: ~2800 calories)",
+                    focus: "This plan is for a full day. Repeat this plan each day of the week to ensure consistent progress.",
+                     meals: [
+                        { time: "Breakfast (650–700 kcal)", item: "3 pesarattu dosas (green gram dosa, ~90 g green gram soaked + ground), 2 tbsp coconut chutney, 1 boiled egg, and 1 glass skimmed milk (200 ml).", macros: "78g carbs, 33g protein, 14g fat", micros: "Iron (green gram), Calcium (milk), Vitamin C (chutney), B12 (egg)", color: "bg-orange-100", alternative: "2 uthappams topped with onion + tomato + coriander + 2 scrambled eggs." },
+                        { time: "Lunch (950–1,000 kcal)", item: "1.5 cups vegetable biryani (150 g basmati rice + beans + carrot + peas + spices, 1 tsp ghee), 2 eggs (boiled, halved) served with biryani, and 1 cucumber raita (1 cup curd + cucumber grated + coriander).", macros: "135g carbs, 34g protein, 21g fat", micros: "Vitamin A (carrot), Folate (peas), Calcium (curd), Selenium (eggs)", color: "bg-green-100", alternative: "Coconut rice + egg curry + beans poriyal." },
+                        { time: "Dinner (850–900 kcal)", item: "2 chapatis (100 g whole wheat flour), 1 cup dal palak (toor dal + spinach, tempered with mustard + garlic), 2 boiled eggs, and 1 cup carrot-beans poriyal (steamed + coconut).", macros: "100g carbs, 32g protein, 19g fat", micros: "Folate (spinach), Vitamin C (carrot), B12 (eggs), Fiber (beans, whole wheat)", color: "bg-blue-100", alternative: "Ragi dosa (2–3 medium) + tomato chutney + egg curry." },
+                        { time: "Total Daily Intake", item: "~2650 calories | Protein: ~125g, Carbs: ~352g, Fat: ~83g", macros: "", micros: "Note: To reach the 2800 kcal goal, add one large banana post-workout and a slightly larger portion of rice at lunch.", color: "bg-indigo-100" }
+                    ]
+                },
+                week4: {
+                    title: "Week 4: Final Push (Target: ~2800 calories)",
+                    focus: "This plan is for a full day. Repeat this plan each day of the week to ensure consistent progress.",
+                    meals: [
+                        { time: "Breakfast (650–700 kcal)", item: "3 ragi dosas (made from 80 g ragi flour + urad batter), 2 tbsp peanut chutney, 1 omelette (2 eggs), and 1 glass skimmed milk (200 ml).", macros: "82g carbs, 31g protein, 17g fat", micros: "Calcium + Iron (ragi), Vitamin E (peanuts), B12 (eggs), Magnesium (ragi + peanuts)", color: "bg-orange-100", alternative: "2 set dosas + vegetable kurma + boiled egg." },
+                        { time: "Lunch (950–1,000 kcal)", item: "2 cups curd rice (150 g cooked rice + 200 ml curd + curry leaves + green chilli + coriander), 1 cup vegetable avial (carrot, beans, drumstick, coconut base), and 2 eggs (scrambled/boiled).", macros: "120g carbs, 35g protein, 22g fat", micros: "Probiotics (curd), Vitamin A (carrot), Calcium (drumstick leaves), Zinc (curd + dal)", color: "bg-green-100", alternative: "Tomato rice + egg kurma + cucumber salad." },
+                        { time: "Dinner (850–900 kcal)", item: "1.5 cups millet rice (foxtail/kodo millet ~150 g cooked), 1 cup sambar (toor dal + tamarind + drumstick + brinjal), 2 boiled eggs, and 1 cup vegetable poriyal (beans + carrot + coconut).", macros: "95g carbs, 30g protein, 18g fat", micros: "Fiber (millets), Vitamin C (sambar veg), Folate (drumstick), B12 (eggs), Manganese (millets)", color: "bg-blue-100", alternative: "Chapati (2) + vegetable kurma + egg curry + small curd bowl." },
+                        { time: "Total Daily Intake", item: "~2650 calories | Protein: ~125g, Carbs: ~352g, Fat: ~83g", macros: "", micros: "Note: To reach the 2800 kcal goal, add one large banana post-workout and a slightly larger portion of rice at lunch.", color: "bg-indigo-100" }
+                    ]
+                }
+            }
+        };
+
+        const mainContent = document.getElementById('main-content');
+        const navigation = document.getElementById('navigation');
+        let macroChart = null;
+        const totalWeeks = 4;
+        const progressState = {
+            completedWeeks: 0,
+            completionStatus: Array(totalWeeks).fill(false)
+        };
+
+        const bmiData = [
+            { label: 'Underweight', range: '< 18.5', color: 'bg-blue-400', risk: 'Potential nutritional deficiencies, osteoporosis, weakened immune system.' },
+            { label: 'Normal', range: '18.5 - 24.9', color: 'bg-green-400', risk: 'Generally considered healthy, lowest risk for major diseases.' },
+            { label: 'Overweight', range: '25.0 - 29.9', color: 'bg-yellow-400', risk: 'Increased risk of heart disease, type 2 diabetes, and high blood pressure.' },
+            { label: 'Obese', range: '30.0+', color: 'bg-red-400', risk: 'High risk of heart disease, stroke, diabetes, certain cancers, and joint problems.' }
+        ];
+
+        function renderDashboard() {
+            const { client, generalGuidelines } = dietPlanData;
+            
+            mainContent.innerHTML = `
+                <div class="content-fade-in">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Welcome to <a href="https://kn0x-fit.com/" target="_blank" class="text-red-500 hover:underline">KN0X-FIT</a>, ${client.name}!</h2>
+                    <p class="text-gray-600 mb-8">Welcome to KN0X-FIT! Thank you for choosing KN0X-FIT. Your transformation journey begins now, and we're thrilled to be a part of your path to a healthier, stronger, and more confident you. Whether you're a seasoned athlete or just starting out, our program is designed to support you every step of the way.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-xl shadow-sm"><p class="text-sm text-gray-500">BMI</p><p class="text-3xl font-bold">${client.bmi}</p><p class="font-semibold text-green-500">Normal</p></div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm"><p class="text-sm text-gray-500">BMR</p><p class="text-3xl font-bold">${client.bmr} <span class="text-base font-normal">kcal</span></p></div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm"><p class="text-sm text-gray-500">TDEE</p><p class="text-3xl font-bold">${client.tdee} <span class="text-base font-normal">kcal</span></p></div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border-2 border-indigo-600"><p class="text-sm text-gray-500">Daily Target</p><p class="text-3xl font-bold text-indigo-600">${client.calorieTarget} <span class="text-base font-normal">kcal</span></p></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <h3 class="text-xl font-bold mb-4">Client Information</h3>
+                            <ul class="space-y-2 text-gray-700">
+                                <li><strong>Name:</strong> ${client.name}</li>
+                                <li><strong>Age:</strong> ${client.age}</li>
+                                <li><strong>Gender:</strong> ${client.gender}</li>
+                                <li><strong>Current Weight:</strong> ${client.currentWeight}</li>
+                                <li><strong>Primary Goal:</strong> ${client.goal}</li>
+                                <li><strong>Dietary Preference:</strong> ${client.dietaryPreference}</li>
+                                <li><strong>Activity Level:</strong> ${client.activityLevel}</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm">
+                            <h3 class="text-xl font-bold mb-4">Daily Macronutrient Goals</h3>
+                            <div class="chart-container h-64 max-h-64 mx-auto max-w-xs">
+                                <canvas id="macroChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-8">
+                        <h3 class="text-xl font-bold mb-4">Progress Tracker</h3>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            ${progressState.completionStatus.map((completed, index) => `
+                                <button data-week="${index + 1}" class="week-tracker-btn flex items-center justify-center p-4 rounded-lg shadow-sm transition-all duration-300 ${completed ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700'}">
+                                    <i class="fa-solid ${completed ? 'fa-check-circle' : 'fa-circle'} mr-2"></i> Week ${index + 1}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <h3 class="text-xl font-bold mb-4">Understanding Your BMI</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            ${bmiData.map(item => `
+                                <div class="p-4 rounded-lg border border-gray-200">
+                                    <div class="flex items-center mb-2">
+                                        <div class="w-4 h-4 rounded-full ${item.color} mr-2"></div>
+                                        <p class="font-bold">${item.label}</p>
+                                    </div>
+                                    <p class="text-sm text-gray-600"><strong>Range:</strong> ${item.range}</p>
+                                    <p class="text-sm text-gray-500 mt-2">${item.risk}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="mt-6 flex justify-center items-center">
+                            <i class="fa-solid fa-chart-bar text-9xl text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            `;
+            createMacroChart();
+        }
+
+        function createMacroChart() {
+            const proteinGrams = 110;
+            const carbsGrams = 415;
+            const fatsGrams = 78;
+
+            const proteinCalories = proteinGrams * 4;
+            const carbsCalories = carbsGrams * 4;
+            const fatsCalories = fatsGrams * 9;
+            const ctx = document.getElementById('macroChart').getContext('2d');
+            if (macroChart) {
+                macroChart.destroy();
+            }
+            macroChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [`Protein (~${proteinGrams}g)`, `Carbs (~${carbsGrams}g)`, `Fats (~${fatsGrams}g)`],
+                    datasets: [{
+                        data: [proteinCalories, carbsCalories, fatsCalories],
+                        backgroundColor: ['#4f46e5', '#34d399', '#f59e0b'],
+                        borderColor: '#fff',
+                        borderWidth: 4,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 14,
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        const totalCalories = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((context.raw / totalCalories) * 100).toFixed(1);
+                                        label += `${context.raw.toFixed(0)} kcal (${percentage}%)`;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderWeek(weekKey) {
+            const weekData = dietPlanData.weeks[weekKey];
+            mainContent.innerHTML = `
+                <div class="content-fade-in">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Diet Plan - Muscle Gain</h2>
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-6">${weekData.title}</h3>
+                    <p class="text-gray-600 mb-8">${weekData.focus}</p>
+                    <div class="space-y-6">
+                        ${weekData.meals.map(meal => {
+                            if (meal.time.includes('Total Daily Intake')) {
+                                return `
+                                    <div class="bg-indigo-100 rounded-xl shadow-sm">
+                                        <button class="collapsible-header w-full flex items-center justify-between p-6 focus:outline-none">
+                                            <h3 class="text-xl font-bold text-indigo-800">${meal.time}</h3>
+                                            <i class="fa-solid fa-chevron-down text-indigo-500"></i>
+                                        </button>
+                                        <div class="collapsible-content border-t border-indigo-300">
+                                            <div class="p-6">
+                                                <p class="font-medium text-indigo-800">${meal.item}</p>
+                                                <p class="text-sm text-indigo-600 mt-2"><strong>Micros:</strong> ${meal.micros}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                return `
+                                    <div class="bg-white rounded-xl shadow-sm border-l-4 ${meal.color === 'bg-orange-100' ? 'border-orange-500' : meal.color === 'bg-green-100' ? 'border-green-500' : 'border-blue-500' || meal.color === 'bg-gray-100' ? 'border-gray-500': ''} p-6">
+                                        <h3 class="text-xl font-bold text-gray-900 mb-2">${meal.time}</h3>
+                                        <div class="pl-4 border-l-2 border-gray-200 space-y-2">
+                                            <p class="font-medium text-gray-800">${meal.item}</p>
+                                            ${meal.alternative ? `
+                                            <div class="mt-2">
+                                                <p class="font-medium text-gray-800">
+                                                    <span class="text-red-500 text-lg mr-2">&bull;</span>
+                                                    Alternative: ${meal.alternative}
+                                                </p>
+                                            </div>` : ''}
+                                            <p class="text-sm text-gray-500"><strong>Macros:</strong> ${meal.macros}</p>
+                                            <p class="text-sm text-gray-500"><strong>Micros:</strong> ${meal.micros}</p>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderKeyNotes() {
+            mainContent.innerHTML = `
+                <div class="content-fade-in">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Key Notes for the Diet Plan</h2>
+                    
+                    <!-- Nutritional Calculations -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fa-solid fa-calculator text-blue-500 mr-3"></i> Nutritional Calculations
+                        </h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li><strong>BMI:</strong> 19.4 (lean but healthy – ideal to focus on muscle gain)</li>
+                            <li><strong>BMR:</strong> ~1,560 kcal/day</li>
+                            <li><strong>TDEE:</strong> ~2,420 kcal/day</li>
+                            <li><strong>Target Calories (Muscle Gain):</strong> ~2,650–2,700 kcal/day (10–12% surplus)</li>
+                            <li><strong>Macro Split:</strong>
+                                <ul class="list-disc list-inside ml-6 mt-1 space-y-1">
+                                    <li>Carbohydrates: 55–58% (~370–390 g/day)</li>
+                                    <li>Protein: 18–20% (~115–120 g/day)</li>
+                                    <li>Fat: 25–27% (~70–75 g/day)</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Dietary Guidelines -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fa-solid fa-leaf text-green-500 mr-3"></i> Dietary Guidelines
+                        </h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li><strong>Protein Sources:</strong> Eggs (4–6/day spread across meals), milk, curd, dals, legumes, sprouts, peanuts, green gram, ragi.</li>
+                            <li><strong>Carb Sources:</strong> Rice, millets (ragi, foxtail, kodo), whole wheat chapati, dosa/idli batter, upma (rava).</li>
+                            <li><strong>Fat Sources:</strong> Coconut (chutney, poriyal), groundnut oil, gingelly (sesame) oil, ghee (minimal).</li>
+                            <li><strong>Vegetables:</strong> Daily include at least 2–3 varieties (greens, carrots, beans, drumstick, brinjal, beetroot, cucumber, tomato).</li>
+                            <li><strong>Dairy:</strong> Skimmed milk (200–300 ml/day), curd (1–2 cups/day).</li>
+                            <li><strong>Hydration:</strong> 3–3.5 L water/day (especially with workouts).</li>
+                            <li><strong>Budget Fit:</strong> Ingredients are local and affordable (₹100–150/day).</li>
+                        </ul>
+                    </div>
+
+                    <!-- Meal Planning Notes -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fa-solid fa-clock text-indigo-500 mr-3"></i> Meal Planning Notes
+                        </h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li><strong>Breakfast:</strong> Heavier on carbs + protein → helps replenish after workout if morning training.</li>
+                            <li><strong>Lunch:</strong> Balanced with rice + dal + eggs + veggies + curd for probiotics.</li>
+                            <li><strong>Dinner:</strong> Moderate carbs, high protein (eggs + dal) → supports overnight recovery.</li>
+                            <li><strong>Snacks:</strong> (Optional if hungry) – Fruits (banana, papaya, watermelon) or soaked groundnuts/green gram.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Micronutrient Coverage -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fa-solid fa-seedling text-teal-500 mr-3"></i> Micronutrient Coverage
+                        </h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li><strong>Calcium:</strong> Ragi, milk, curd.</li>
+                            <li><strong>Iron:</strong> Spinach, green gram, drumstick leaves, dals.</li>
+                            <li><strong>B12:</strong> Eggs, dairy.</li>
+                            <li><strong>Vitamin C:</strong> Sambar veggies, tomatoes, lemon.</li>
+                            <li><strong>Folate:</strong> Spinach, beans, green gram.</li>
+                            <li><strong>Omega-3 Healthy Fats:</strong> Groundnuts, sesame, coconut.</li>
+                            <li><strong>Probiotics:</strong> Curd.</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Lifestyle & Training Notes -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fa-solid fa-dumbbell text-purple-500 mr-3"></i> Lifestyle & Training Notes
+                        </h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li><strong>Workout:</strong> Strength training 4–5 days/week (progressive overload for muscle growth).</li>
+                            <li><strong>Pre-Workout (30–45 min):</strong> Banana or small dosa with chutney.</li>
+                            <li><strong>Post-Workout (within 1 hr):</strong> Milk + 2 boiled eggs + fruit (quick protein & carbs).</li>
+                            <li><strong>Sleep:</strong> Minimum 7–8 hrs/night for muscle recovery.</li>
+                            <li><strong>Alcohol/Smoking:</strong> Minimize, as both slow muscle recovery and nutrient absorption.</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Practical Tips -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fa-solid fa-utensils text-red-500 mr-3"></i> Practical Tips
+                        </h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li>Prepare dosa/idli batter for 3–4 days in advance.</li>
+                            <li>Cook rice + dal in bulk, store in fridge for 2 days.</li>
+                            <li>Boil eggs in bulk (store for 2 days).</li>
+                            <li>Always add lemon juice or curry leaves → enhances iron absorption & flavor.</li>
+                            <li>Portion control: Don’t overshoot rice/chapati, stick to planned serving.</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderExplore() {
+            mainContent.innerHTML = `
+                <div class="content-fade-in">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Thank you for choosing <a href="https://kn0x-fit.com/" target="_blank" class="text-red-500 hover:underline">KN0X-FIT</a>!</h2>
+                    <p class="text-gray-600 mb-8">Your transformation journey begins now, and we're thrilled to be a part of your path to a healthier, stronger, and more confident you. Whether you're a seasoned athlete or just starting out, our program is designed to support you every step of the way.</p>
+
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6">Here are other plans that you can choose:</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <!-- Plan 1 -->
+                        <div class="bg-blue-50 p-6 rounded-xl shadow-sm flex flex-col items-center text-center border-t-4 border-blue-500">
+                            <i class="fa-solid fa-dumbbell text-4xl text-blue-500 mb-4"></i>
+                            <h4 class="text-xl font-bold text-blue-600">Workout Plan</h4>
+                            <p class="text-sm text-gray-500 mt-2 text-left">Comprehensive workout plan designed for building muscle with professional guidance.</p>
+                            <ul class="list-disc list-inside text-gray-700 text-left mt-4 space-y-2 w-full">
+                                <li>Specialized workout routine</li>
+                                <li>Progressive training plan</li>
+                                <li>Assigned to your goals</li>
+                                <li>Tailored to fitness level</li>
+                                <li>One session with expert trainer</li>
+                            </ul>
+                            <p class="text-2xl font-bold mt-4">₹499<span class="text-base font-normal">/month</span></p>
+                        </div>
+                        <!-- Plan 2 -->
+                        <div class="bg-green-50 p-6 rounded-xl shadow-lg flex flex-col items-center text-center border-t-4 border-green-500 transform transition-transform duration-300 scale-105">
+                            <i class="fa-solid fa-star text-4xl text-green-500 mb-4"></i>
+                            <h4 class="text-xl font-bold text-green-600">Total Transformation</h4>
+                            <p class="text-sm text-gray-500 mt-2 text-left">Complete diet and workout plan with weekly trainer consultation and daily follow-ups.</p>
+                            <ul class="list-disc list-inside text-gray-700 text-left mt-4 space-y-2 w-full">
+                                <li>Personalised diet & workout combined plan</li>
+                                <li>Assigned to your goals</li>
+                                <li>Weekly trainer sessions</li>
+                                <li>Daily follow-up support</li>
+                                <li>Royalty program eligible</li>
+                                <li>Get 1 month FREE with daily updates</li>
+                            </ul>
+                            <p class="text-2xl font-bold mt-4">₹2999<span class="text-base font-normal">/month</span></p>
+                        </div>
+                        <!-- Plan 3 -->
+                        <div class="bg-orange-50 p-6 rounded-xl shadow-sm flex flex-col items-center text-center border-t-4 border-orange-500">
+                            <i class="fa-solid fa-running text-4xl text-orange-500 mb-4"></i>
+                            <h4 class="text-xl font-bold text-orange-600">General Fitness</h4>
+                            <p class="text-sm text-gray-500 mt-2 text-left">Balanced diet and workout plan with one trainer session to kickstart your fitness journey.</p>
+                            <ul class="list-disc list-inside text-gray-700 text-left mt-4 space-y-2 w-full">
+                                <li>Balanced diet plan</li>
+                                <li>Basic workout routine</li>
+                                <li>One trainer consultation</li>
+                                <li>BMI report included</li>
+                                <li>Sustainable approach</li>
+                            </ul>
+                            <p class="text-2xl font-bold mt-4">₹999<span class="text-base font-normal">/month</span></p>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-12">
+                        <a href="https://kn0x-fit.com/" target="_blank" class="text-gray-600 mb-6 font-semibold inline-block text-lg text-red-500 hover:underline transition-colors">KN0X-FIT - Built for Change, Designed for You</a>
+                        <div class="flex justify-center items-center gap-6 mt-4">
+                            <!-- WhatsApp -->
+                            <a href="https://wa.me/919380422603" target="_blank" class="flex items-center gap-2 text-gray-600 hover:text-green-500 transition-colors">
+                                <i class="fa-brands fa-whatsapp text-3xl" style="color: #25D366;"></i>
+                                <span>+91 9380422603</span>
+                            </a>
+                            <!-- Email -->
+                            <a href="mailto:info@kn0x-fit.com" class="flex items-center gap-2 text-gray-600 hover:text-blue-500 transition-colors">
+                                <i class="fa-solid fa-envelope text-3xl" style="color: #0072C6;"></i>
+                                <span>info@kn0x-fit.com</span>
+                            </a>
+                            <!-- Instagram -->
+                            <a href="https://www.instagram.com/kn0x_fit/profilecard/?igsh=bWFiMzlkanppYTh1" target="_blank" class="flex items-center gap-2 text-gray-600 hover:text-purple-600 transition-colors">
+                                <i class="fa-brands fa-instagram text-3xl" style="background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);-webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                                <span>@KN0X_FIT</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        mainContent.addEventListener('click', (e) => {
+            const header = e.target.closest('.collapsible-header');
+            if (header) {
+                const content = header.nextElementSibling;
+                header.classList.toggle('expanded');
+                content.classList.toggle('expanded');
+            }
+
+            const trackerBtn = e.target.closest('.week-tracker-btn');
+            if (trackerBtn) {
+                const weekIndex = parseInt(trackerBtn.dataset.week) - 1;
+                progressState.completionStatus[weekIndex] = !progressState.completionStatus[weekIndex];
+                renderDashboard();
+            }
+        });
+
+        function setActiveLink(view) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.view === view) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        navigation.addEventListener('click', (e) => {
+            e.preventDefault();
+            const link = e.target.closest('.nav-link');
+            if (link) {
+                const view = link.dataset.view;
+                setActiveLink(view);
+                if (view === 'dashboard') {
+                    renderDashboard();
+                } else if (view === 'explore') {
+                    renderExplore();
+                } else if (view === 'keyNotes') {
+                    renderKeyNotes();
+                } else {
+                    renderWeek(view);
+                }
+            }
+        });
+        
+        setActiveLink('dashboard');
+        renderDashboard();
+
+    </script>
+</body>
+</html>
+```
